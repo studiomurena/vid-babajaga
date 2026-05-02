@@ -25,8 +25,8 @@ let poliziotti = [];
 let baba, furgone;
 let creatureGabbie = [];
 let ostacoliBosco = [];
-let zombiesBosco = [];
-let spawnZombieEvent;
+let stregheBosco = []; // ARRAY SOSTITUITO: ora ci sono le streghe glitchate
+let spawnStregheEvent;
 
 let faseVideo = 1; // 1: Milano1, 2: Bosco, 3: Metro, 4: Milano2
 let velocitaScorrimento = 2; 
@@ -34,8 +34,9 @@ let bossFightBosco = false;
 
 // --- ROSTER V2 E FREAKS CONFERMATI ---
 const membri = ['carma2', 'ferraz2', 'mauri2', 'nan2', 'falcon2'];
-const guardie = ['cop', 'copzombie'];
-const creature = ['drogato', 'murena', 'pigeon', 'beeman', 'franken', 'nano', 'ornitorincoman', 'orologioman', 'radioman'];
+const guardie = ['cop', 'copzombie']; 
+// Aggiunta 'strega' alle creature per fargli caricare in loop i frame
+const creature = ['drogato', 'murena', 'pigeon', 'beeman', 'franken', 'nano', 'ornitorincoman', 'orologioman', 'radioman', 'strega'];
 const animazioni = ['idle', 'run', 'walk', 'attack', 'jump', 'hurt', 'fall', 'hit_react', 'dance'];
 
 function preload() {
@@ -77,7 +78,7 @@ function preload() {
 }
 
 function create() {
-    let yPavimento = 930;
+    let yPavimento = 930; // Il pavimento inizia qui
     
     // ==========================================================================================
     // --- 1. SETTAGGIO SFONDI, CIELI E PAVIMENTI ---
@@ -105,14 +106,14 @@ function create() {
     pav3 = this.textures.exists('pav3') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav3') : fp3;
     bg3.setDepth(0).setAlpha(0.5).setVisible(false); pav3.setDepth(2).setVisible(false);
 
-    // ZONA 4: Solo Skyline3 (NO CIELO)
-    let fb4 = this.add.rectangle(960, 540, 1920, 1080, 0x111111).setDepth(0).setVisible(false);
-    bg4 = this.textures.exists('bg4') ? this.add.tileSprite(960, 540, 1920, 1080, 'bg4') : fb4;
+    // ZONA 4: Solo Skyline3
+    let fb4 = this.add.rectangle(960, yPavimento/2, 1920, yPavimento, 0x111111).setDepth(0).setVisible(false);
+    bg4 = this.textures.exists('bg4') ? this.add.tileSprite(960, yPavimento/2, 1920, yPavimento, 'bg4') : fb4;
     bg4.setDepth(0).setVisible(false); 
+    
     let fp4 = this.add.rectangle(960, yPavimento, 1920, 300, 0x222222).setDepth(2).setVisible(false);
     pav4 = this.textures.exists('pav4') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav4') : fp4;
     pav4.setDepth(2).setVisible(false);
-    // ==========================================================================================
 
     // --- TRICK DELL'OMBRA ---
     let ombraSfondo = this.add.graphics();
@@ -177,10 +178,8 @@ function create() {
         ostacoliBosco.push(p, d); 
     }
 
-    // ==========================================================================================
     // --- SCENOGRAFIA ZONA 3 (Metro: 15 MOSTRI molto più distanziati) ---
-    // Aumentato a 15 creature e distanziate di 1200px l'una dall'altra
-    let poolCreature = Phaser.Utils.Array.Shuffle([...creature, ...creature, ...creature]).slice(0, 15);
+    let poolCreature = Phaser.Utils.Array.Shuffle([...creature, ...creature, ...creature]).filter(c => c !== 'strega').slice(0, 15); 
     
     poolCreature.forEach((c, i) => {
         let creatura = this.add.sprite(2000 + (i*1200), 800, `${c}_idle`).setDepth(2.5).setScale(1.95).setVisible(false); 
@@ -197,10 +196,9 @@ function create() {
         creatura.baseX = 2000 + (i*1200);
         creatureGabbie.push(creatura);
     });
-    // ==========================================================================================
 
-    // --- EVENTO GENERATORE ZOMBIE BOSCO (Fix Distanze) ---
-    spawnZombieEvent = this.time.addEvent({
+    // --- EVENTO GENERATORE STREGHE BOSCO (Glitch, Spawn e Drop) ---
+    spawnStregheEvent = this.time.addEvent({
         delay: 1100 * mTempo, 
         loop: true,
         callback: () => {
@@ -209,30 +207,53 @@ function create() {
                 
                 if (pioveDalCielo) {
                     let startX = Phaser.Math.Between(50, 400); 
-                    let zop = this.add.sprite(startX, -200, 'copzombie_run').setDepth(4).setScale(2);
-                    zop.setFlipX(false); 
-                    if (this.anims.exists('copzombie_run_anim')) zop.play('copzombie_run_anim');
+                    let strega = this.add.sprite(startX, -200, 'strega_run').setDepth(4).setScale(2);
+                    strega.setFlipX(false); 
+                    if (this.anims.exists('strega_run_anim')) strega.play('strega_run_anim');
                     
+                    // FUNZIONE GLITCH
+                    this.time.addEvent({
+                        delay: 90, loop: true,
+                        callback: () => {
+                            if (strega && strega.active) {
+                                if (Math.random() > 0.5) strega.setTint(0xff00ff, 0x00ffff, 0xffffff, 0xffffff);
+                                else strega.clearTint();
+                                strega.alpha = Math.random() > 0.8 ? 0.4 : 1;
+                            }
+                        }
+                    });
+
                     this.tweens.add({
-                        targets: zop, y: 780, angle: 360, duration: 1000 * mTempo, ease: 'Bounce.easeOut',
+                        targets: strega, y: 780, angle: 360, duration: 1000 * mTempo, ease: 'Bounce.easeOut',
                         onComplete: () => {
-                            zop.angle = 0;
-                            // Corre ma si ferma prima della band (max x:500)
-                            this.tweens.add({ targets: zop, x: startX + 100, duration: 2500 * mTempo });
-                            this.tweens.add({ targets: zop, alpha: 0, duration: 1000 * mTempo, delay: 1500 * mTempo, onComplete: () => zop.destroy() });
+                            strega.angle = 0;
+                            this.tweens.add({ targets: strega, x: startX + 100, duration: 2500 * mTempo });
+                            this.tweens.add({ targets: strega, alpha: 0, duration: 1000 * mTempo, delay: 1500 * mTempo, onComplete: () => strega.destroy() });
                         }
                     });
                 } else {
                     let startX = Phaser.Math.Between(1500, 1920); 
-                    let zop = this.add.sprite(startX, 780, 'copzombie_idle').setDepth(4).setScale(2);
-                    zop.setFlipX(true); 
-                    if (this.anims.exists('copzombie_idle_anim')) zop.play('copzombie_idle_anim');
-                    zop.customState = 'waiting';
+                    let strega = this.add.sprite(startX, 780, 'strega_idle').setDepth(4).setScale(2);
+                    strega.setFlipX(true); 
+                    if (this.anims.exists('strega_idle_anim')) strega.play('strega_idle_anim');
+                    strega.customState = 'waiting';
                     
-                    let flame = this.add.circle(startX, 780, 80, 0xff5500).setDepth(4.1).setBlendMode(Phaser.BlendModes.ADD);
+                    // FUNZIONE GLITCH 
+                    this.time.addEvent({
+                        delay: 90, loop: true,
+                        callback: () => {
+                            if (strega && strega.active) {
+                                if (Math.random() > 0.5) strega.setTint(0xff00ff, 0x00ffff, 0xffffff, 0xffffff);
+                                else strega.clearTint();
+                                strega.alpha = Math.random() > 0.8 ? 0.4 : 1;
+                            }
+                        }
+                    });
+
+                    let flame = this.add.circle(startX, 780, 80, 0xff00ff).setDepth(4.1).setBlendMode(Phaser.BlendModes.ADD); // Fiamma glitchata fucsia
                     this.tweens.add({ targets: flame, scale: 2.5, alpha: 0, duration: 600 * mTempo, onComplete: () => flame.destroy() });
                     
-                    zombiesBosco.push(zop); 
+                    stregheBosco.push(strega); 
                 }
             }
         }
@@ -293,7 +314,7 @@ function create() {
         });
     });
 
-    // MINUTO 1:45 (105s) - BOSCO BOSS: Arriva la Baba Matta
+    // MINUTO 1:45 (105s) - BOSCO BOSS: Arriva la Baba Matta e si ripulisce
     this.time.delayedCall(105000 * mTempo, () => {
         bossFightBosco = true; 
         velocitaScorrimento = 0; 
@@ -302,10 +323,11 @@ function create() {
             if (anim) bandSprites[m].play(anim); 
         });
 
-        zombiesBosco.forEach(z => {
-            if(z.active) this.tweens.add({targets: z, alpha: 0, duration: 500, onComplete: () => z.destroy()});
+        // Eliminiamo le streghe rimanenti
+        stregheBosco.forEach(s => {
+            if(s.active) this.tweens.add({targets: s, alpha: 0, duration: 500, onComplete: () => s.destroy()});
         });
-        zombiesBosco = [];
+        stregheBosco = [];
 
         ostacoliBosco.forEach(o => {
             this.tweens.add({targets: o, alpha: 0, duration: 800 * mTempo, onComplete: () => o.setVisible(false)});
@@ -319,7 +341,7 @@ function create() {
         this.tweens.add({ targets: baba, x: '+=20', y: '-=10', duration: 50, yoyo: true, repeat: -1 });
     });
 
-    // MINUTO 1:55 (115s) - BABA MATTA ATTACCA
+    // MINUTO 1:55 (115s) - BABA MATTA ATTACCA -> BAND HURT
     this.time.delayedCall(115000 * mTempo, () => {
         if (this.anims.exists('baba_attack_anim')) baba.play('baba_attack_anim');
         
@@ -336,7 +358,7 @@ function create() {
         });
     });
 
-    // MINUTO 2:05 (125s) - DISTORSIONE TOTALE -> FLASH E INIZIO METRO (Lunga)
+    // MINUTO 2:05 (125s) - DISTORSIONE TOTALE -> FLASH E INIZIO METRO
     this.time.delayedCall(125000 * mTempo, () => {
         this.cameras.main.zoomTo(3, 1500 * mTempo); 
         this.tweens.add({ targets: dreamOverlay, alpha: 1, duration: 1500 * mTempo });
@@ -376,8 +398,6 @@ function create() {
         });
     });
 
-    // ==========================================================================================
-    // --- TIMELINE METRO ESTESA (Baba appare dopo ben 75 secondi, a 3:20) ---
     // MINUTO 3:20 (200s) - FINE METRO: BABA GIGANTE
     this.time.delayedCall(200000 * mTempo, () => {
         velocitaScorrimento = 0; 
@@ -394,7 +414,7 @@ function create() {
         });
 
         baba.x = 1400; 
-        baba.setScale(4.0); // RIDOTTA a 4.0, si vedono perfettamente i piedi
+        baba.setScale(4.0); 
         if (this.anims.exists('baba_idle_anim')) baba.play('baba_idle_anim');
     });
 
@@ -433,7 +453,7 @@ function create() {
         this.tweens.add({ targets: baba, alpha: 0, scale: 0, duration: 3000 * mTempo, delay: 8000 * mTempo, ease: 'Back.easeIn' }); 
     });
 
-    // MINUTO 3:43 (223s) - FLASH 
+    // MINUTO 3:43 (223s) - FLASH E ULTIMA PASSEGGIATA
     this.time.delayedCall(223000 * mTempo, () => {
         this.tweens.add({
             targets: flashRect,
@@ -449,7 +469,7 @@ function create() {
                 });
 
                 bg3.setVisible(false); pav3.setVisible(false);
-                bg4.setVisible(true); pav4.setVisible(true); // SOLO bg4 (skyline3)
+                bg4.setVisible(true); pav4.setVisible(true); 
                 
                 creatureGabbie.forEach(c => { c.setVisible(false); if(c.gabbiaRef) c.gabbiaRef.setVisible(false); });
                 
@@ -459,7 +479,6 @@ function create() {
             }
         });
     });
-    // ==========================================================================================
 
     // MINUTO 4:10 (250s) - Arriva il Furgone
     this.time.delayedCall(250000 * mTempo, () => {
@@ -504,30 +523,29 @@ function update() {
     }
 
     if (faseVideo === 2 && !bossFightBosco) {
-        for (let i = zombiesBosco.length - 1; i >= 0; i--) {
-            let z = zombiesBosco[i];
-            if (!z.active) {
-                zombiesBosco.splice(i, 1);
+        for (let i = stregheBosco.length - 1; i >= 0; i--) {
+            let s = stregheBosco[i];
+            if (!s.active) {
+                stregheBosco.splice(i, 1);
                 continue;
             }
-            if (z.customState === 'waiting') {
-                z.x -= velocitaScorrimento * 3; 
-                if (z.x < 650) { 
-                    z.customState = 'chasing';
-                    z.setFlipX(false); 
-                    if (this.anims.exists('copzombie_run_anim')) z.play('copzombie_run_anim');
+            if (s.customState === 'waiting') {
+                s.x -= velocitaScorrimento * 3; 
+                if (s.x < 650) { 
+                    s.customState = 'chasing';
+                    s.setFlipX(false); 
+                    if (this.anims.exists('strega_run_anim')) s.play('strega_run_anim');
                     
-                    // ==========================================================================================
-                    // DISTANZIAMENTO ZOMBIE: Si fermano a x:550, Carma è a 750. Zero crash addosso!
-                    this.tweens.add({ targets: z, x: 550, duration: 2500 * mTempo, ease: 'Linear' });
-                    // ==========================================================================================
-                    this.tweens.add({ targets: z, alpha: 0, duration: 1000 * mTempo, delay: 2000 * mTempo, onComplete: () => z.destroy() });
+                    this.tweens.add({ targets: s, x: 550, duration: 2500 * mTempo, ease: 'Linear' });
+                    this.tweens.add({ targets: s, alpha: 0, duration: 1000 * mTempo, delay: 2000 * mTempo, onComplete: () => s.destroy() });
                 }
             }
         }
     }
 
     if (faseVideo === 1) {
+        // --- AGGIUNTO IL MOVIMENTO PIANO PIANO DEL CIELO ---
+        sky1.tilePositionX += velocitaScorrimento * 0.2; // Scorrevolezza epica
         bg1.tilePositionX += velocitaScorrimento * 1; 
         pav1.tilePositionX += velocitaScorrimento * 3; 
     } else if (faseVideo === 2) {
