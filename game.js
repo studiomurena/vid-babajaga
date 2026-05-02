@@ -9,7 +9,7 @@ const config = {
 const game = new Phaser.Game(config);
 
 // --- BASTONE MAGICO ---
-// TRUE: Il video dura 18 secondi (test) | FALSE: Il video dura 3 minuti reali (live)
+// TRUE: Il video dura 18 secondi (test) | FALSE: Il video dura 4 minuti e 28 secondi reali (live)
 const MODALITA_TEST = false; 
 const mTempo = MODALITA_TEST ? 0.1 : 1; 
 
@@ -96,7 +96,6 @@ function create() {
     pav4 = this.textures.exists('pav4') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav4') : fp4;
     bg4.setDepth(0.65).setVisible(false); pav4.setDepth(2).setVisible(false);
 
-    // ==========================================================================================
     // --- IL TRICK DELL'OMBRA ---
     let ombraSfondo = this.add.graphics();
     ombraSfondo.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 1, 1);
@@ -107,7 +106,6 @@ function create() {
     ombraPavimento.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.9, 0.9, 0, 0); 
     ombraPavimento.fillRect(0, yPavimento, 1920, 70); 
     ombraPavimento.setDepth(2.1); 
-    // ==========================================================================================
 
     // --- EFFETTI SPECIALI ---
     flashRect = this.add.rectangle(960, 540, 1920, 1080, 0xffffff).setDepth(100).setAlpha(0);
@@ -143,8 +141,6 @@ function create() {
     if (this.textures.exists('furgone_idle')) this.anims.create({ key: 'furgone_idle_anim', frames: this.anims.generateFrameNumbers('furgone_idle'), frameRate: 10, repeat: -1 });
 
     // --- 3. INSERIMENTO ATTORI ---
-    // ==========================================================================================
-    // --- LA BAND C'È DA SUBITO ED È VISIBILE ---
     let posizioniBandX = { 'carma2': 750, 'ferraz2': 850, 'mauri2': 950, 'nan2': 1050, 'falcon2': 1150 };
     
     membri.forEach(m => {
@@ -152,14 +148,9 @@ function create() {
         let startAnim = this.anims.exists(`${m}_walk_anim`) ? `${m}_walk_anim` : (this.anims.exists(`${m}_idle_anim`) ? `${m}_idle_anim` : `${m}_run_anim`);
         if (startAnim) bandSprites[m].play(startAnim);
     });
-    // ==========================================================================================
 
     baba = this.add.sprite(2200, 750, 'baba_idle').setDepth(5).setScale(2.5).setFlipX(true);
-    
-    // ==========================================================================================
-    // --- IL FURGONE NASCE INVISIBILE E FUORI SCHERMO ---
     furgone = this.add.sprite(2500, 650, 'furgone_run').setDepth(6).setScale(4.5).setFlipX(true).setVisible(false);
-    // ==========================================================================================
 
     // --- SCENOGRAFIA ZONA 2 (Bosco) ---
     for(let i=0; i<4; i++) {
@@ -227,11 +218,11 @@ function create() {
     });
 
     // ==========================================
-    // --- 4. LA REGIA DEL VIDEO (TIMELINE) ---
+    // --- 4. LA REGIA DEL VIDEO (4:28 SCALATO) ---
     // ==========================================
 
-    // MINUTO 0:20 (20s) - Milano Inseguimento Lento
-    this.time.delayedCall(20000 * mTempo, () => {
+    // MINUTO 0:30 (30s) - Milano Inseguimento Lento
+    this.time.delayedCall(30000 * mTempo, () => {
         velocitaScorrimento = 5; 
         membri.forEach(m => { 
             let anim = this.anims.exists(`${m}_run_anim`) ? `${m}_run_anim` : `${m}_walk_anim`;
@@ -246,22 +237,24 @@ function create() {
         }
     });
 
-    // MINUTO 0:35 (35s) - Baba Jaga entra a Milano
-    this.time.delayedCall(35000 * mTempo, () => {
+    // MINUTO 0:45 (45s) - Baba Jaga entra a Milano
+    this.time.delayedCall(45000 * mTempo, () => {
         if (this.anims.exists('baba_idle_anim')) baba.play('baba_idle_anim');
         this.tweens.add({ targets: baba, x: 1600, duration: 2000 * mTempo, ease: 'Power2' });
     });
 
-    // MINUTO 0:40 (40s) - BABA ATTACCA E TELETRASPORTA
-    this.time.delayedCall(40000 * mTempo, () => {
+    // MINUTO 0:55 (55s) - BABA ATTACCA 
+    this.time.delayedCall(55000 * mTempo, () => {
         if (this.anims.exists('baba_attack_anim')) baba.play('baba_attack_anim');
     });
-    this.time.delayedCall(42000 * mTempo, () => {
+
+    // MINUTO 0:58 (58s) - FLASH E TELETRASPORTO
+    this.time.delayedCall(58000 * mTempo, () => {
         this.tweens.add({ targets: flashRect, alpha: 1, duration: 500 * mTempo, yoyo: true, hold: 500 * mTempo });
     });
 
-    // MINUTO 0:42 (42.5s) - BOSCO
-    this.time.delayedCall(42500 * mTempo, () => {
+    // MINUTO 1:00 (60s) - BOSCO (Sogno Lucido)
+    this.time.delayedCall(60000 * mTempo, () => {
         faseVideo = 2;
         velocitaScorrimento = 5; 
         baba.x = 2500; 
@@ -273,8 +266,8 @@ function create() {
         poliziotti.forEach(p => p.destroy()); poliziotti = [];
     });
 
-    // MINUTO 1:08 (68s) - BOSCO BOSS: Arriva la Baba Matta!
-    this.time.delayedCall(68000 * mTempo, () => {
+    // MINUTO 1:45 (105s) - BOSCO BOSS: Arriva la Baba Matta e spariscono i drogati!
+    this.time.delayedCall(105000 * mTempo, () => {
         bossFightBosco = true; 
         velocitaScorrimento = 0; 
         membri.forEach(m => { 
@@ -282,10 +275,16 @@ function create() {
             if (anim) bandSprites[m].play(anim); 
         });
 
+        // Elimina Zombie Fiamma
         zombiesBosco.forEach(z => {
             if(z.active) this.tweens.add({targets: z, alpha: 0, duration: 500, onComplete: () => z.destroy()});
         });
         zombiesBosco = [];
+
+        // ELIMINA DROGATI E PALI NEL BOSCHETTO
+        ostacoliBosco.forEach(o => {
+            this.tweens.add({targets: o, alpha: 0, duration: 800 * mTempo, onComplete: () => o.setVisible(false)});
+        });
 
         baba.x = 1600;
         baba.setScale(3); 
@@ -295,8 +294,8 @@ function create() {
         this.tweens.add({ targets: baba, x: '+=20', y: '-=10', duration: 50, yoyo: true, repeat: -1 });
     });
 
-    // MINUTO 1:13 (73s) - BABA MATTA ATTACCA -> BAND HURT
-    this.time.delayedCall(73000 * mTempo, () => {
+    // MINUTO 1:55 (115s) - BABA MATTA ATTACCA -> BAND HURT
+    this.time.delayedCall(115000 * mTempo, () => {
         if (this.anims.exists('baba_attack_anim')) baba.play('baba_attack_anim');
         
         membri.forEach(m => {
@@ -305,15 +304,15 @@ function create() {
         });
     });
 
-    // MINUTO 1:15 (75s) - SCONFITTA -> BAND FALL
-    this.time.delayedCall(75000 * mTempo, () => {
+    // MINUTO 2:00 (120s) - SCONFITTA -> BAND FALL
+    this.time.delayedCall(120000 * mTempo, () => {
         membri.forEach(m => {
             if (this.anims.exists(`${m}_fall_anim`)) bandSprites[m].play(`${m}_fall_anim`);
         });
     });
 
-    // MINUTO 1:18 (78s) - DISTORSIONE TOTALE -> FLASH
-    this.time.delayedCall(78000 * mTempo, () => {
+    // MINUTO 2:05 (125s) - DISTORSIONE TOTALE -> FLASH
+    this.time.delayedCall(125000 * mTempo, () => {
         this.cameras.main.zoomTo(3, 1500 * mTempo); 
         this.tweens.add({ targets: dreamOverlay, alpha: 1, duration: 1500 * mTempo });
         this.time.delayedCall(1500 * mTempo, () => {
@@ -321,8 +320,8 @@ function create() {
         });
     });
 
-    // MINUTO 1:20 (80s) - RISVEGLIO IN METRO
-    this.time.delayedCall(80500 * mTempo, () => {
+    // MINUTO 2:10 (130s) - RISVEGLIO IN METRO
+    this.time.delayedCall(130000 * mTempo, () => {
         faseVideo = 3;
         bossFightBosco = false;
         velocitaScorrimento = 2.5; 
@@ -346,8 +345,8 @@ function create() {
         creatureGabbie.forEach(c => { c.setVisible(true); c.gabbiaRef.setVisible(true); });
     });
 
-    // MINUTO 2:00 (120s) - FINE METRO: BABA GIGANTE
-    this.time.delayedCall(120000 * mTempo, () => {
+    // MINUTO 3:10 (190s) - FINE METRO: BABA GIGANTE (PIÙ VICINA)
+    this.time.delayedCall(190000 * mTempo, () => {
         velocitaScorrimento = 0; 
         membri.forEach(m => { 
             let anim = this.anims.exists(`${m}_idle_anim`) ? `${m}_idle_anim` : `${m}_walk_anim`;
@@ -361,13 +360,14 @@ function create() {
             }
         });
 
-        baba.x = 1600;
+        // PIU' VICINA (X: 1400 anzichè 1600)
+        baba.x = 1400;
         baba.setScale(5); 
         if (this.anims.exists('baba_idle_anim')) baba.play('baba_idle_anim');
     });
 
-    // MINUTO 2:05 (125s) - ATTACCO DI GRUPPO
-    this.time.delayedCall(125000 * mTempo, () => {
+    // MINUTO 3:20 (200s) - ATTACCO DI GRUPPO E MORTE ESPLOSIVA DELLA BABA
+    this.time.delayedCall(200000 * mTempo, () => {
         membri.forEach(m => {
             if (this.anims.exists(`${m}_attack_anim`)) bandSprites[m].play(`${m}_attack_anim`);
         });
@@ -377,20 +377,43 @@ function create() {
                 if (this.anims.exists(`${baseKey}_attack_anim`)) c.play(`${baseKey}_attack_anim`);
             }
         });
+
         if (this.anims.exists('baba_hurt_anim')) baba.play('baba_hurt_anim');
-        this.tweens.add({ targets: baba, alpha: 0, scale: 0, duration: 2000 * mTempo, ease: 'Back.easeIn' }); 
+        
+        // GLITCH E ESPLOSIONI DELLA BABA (Dura 10 secondi)
+        this.tweens.add({ targets: baba, x: '+=40', y: '-=20', duration: 40, yoyo: true, repeat: 150 }); 
+        
+        this.time.addEvent({
+            delay: 100 * mTempo, repeat: 80,
+            callback: () => baba.setTint(Phaser.Math.RND.pick([0xff0000, 0x000000, 0xffffff, 0xff00ff, 0xffaa00]))
+        });
+
+        let explEvent = this.time.addEvent({
+            delay: 200 * mTempo, repeat: 40,
+            callback: () => {
+                let exX = baba.x + Phaser.Math.Between(-200, 200);
+                let exY = baba.y + Phaser.Math.Between(-300, 200);
+                let expl = this.add.circle(exX, exY, 20, Phaser.Math.RND.pick([0xffaa00, 0xff0000, 0xffffff])).setDepth(6).setBlendMode(Phaser.BlendModes.ADD);
+                this.tweens.add({ targets: expl, scale: 15, alpha: 0, duration: 600 * mTempo, onComplete: () => expl.destroy() });
+            }
+        });
+
+        // Si dissolve e muore a 3:28 (208s)
+        this.tweens.add({ targets: baba, alpha: 0, scale: 0, duration: 3000 * mTempo, delay: 8000 * mTempo, ease: 'Back.easeIn' }); 
     });
 
-    // MINUTO 2:10 (130s) - FLASH E TELETRASPORTO MILANO 4
-    this.time.delayedCall(130000 * mTempo, () => {
+    // MINUTO 3:33 (213s) - FLASH 
+    this.time.delayedCall(213000 * mTempo, () => {
         this.tweens.add({ targets: flashRect, alpha: 1, duration: 500 * mTempo, yoyo: true, hold: 500 * mTempo });
     });
-    this.time.delayedCall(130500 * mTempo, () => {
+
+    // MINUTO 3:35 (215s) - TELETRASPORTO MILANO 4 (PASSEGGIATA FINALE)
+    this.time.delayedCall(215000 * mTempo, () => {
         faseVideo = 4;
-        velocitaScorrimento = 4; 
+        velocitaScorrimento = 3; // Camminano tranquilli
         
         membri.forEach(m => { 
-            let anim = this.anims.exists(`${m}_run_anim`) ? `${m}_run_anim` : `${m}_walk_anim`;
+            let anim = this.anims.exists(`${m}_walk_anim`) ? `${m}_walk_anim` : `${m}_idle_anim`; // PASSEGGIANO
             if (anim) bandSprites[m].play(anim); 
         });
 
@@ -399,39 +422,31 @@ function create() {
         creatureGabbie.forEach(c => { c.setVisible(false); if(c.gabbiaRef) c.gabbiaRef.setVisible(false); });
     });
 
-    // MINUTO 2:25 (145s) - Si fermano per il furgone
-    this.time.delayedCall(145000 * mTempo, () => {
-        velocitaScorrimento = 0; 
-        membri.forEach(m => { 
-            let anim = this.anims.exists(`${m}_idle_anim`) ? `${m}_idle_anim` : `${m}_walk_anim`;
-            if (anim) bandSprites[m].play(anim); 
-        });
-    });
-
-    // ==========================================================================================
-    // --- MINUTO 2:35 (155s) - FINALMENTE ARRIVA IL FURGONE ---
-    this.time.delayedCall(155000 * mTempo, () => {
+    // MINUTO 4:10 (250s) - Arriva il Furgone
+    this.time.delayedCall(250000 * mTempo, () => {
         furgone.x = 2500;
-        furgone.setVisible(true); // COMPARE SOLO ORA!
+        furgone.setVisible(true); 
         if (this.anims.exists('furgone_run_anim')) furgone.play('furgone_run_anim');
-        this.tweens.add({ targets: furgone, x: 960, duration: 3000 * mTempo, ease: 'Power2' });
+        this.tweens.add({ targets: furgone, x: 960, duration: 5000 * mTempo, ease: 'Power2' }); 
     });
 
-    // MINUTO 2:38 (158s) - Furgone Inchioda
-    this.time.delayedCall(158000 * mTempo, () => {
+    // MINUTO 4:15 (255s) - Furgone Inchioda, Band sale
+    this.time.delayedCall(255000 * mTempo, () => {
+        velocitaScorrimento = 0; // Si fermano per salire
         if (this.anims.exists('furgone_idle_anim')) furgone.play('furgone_idle_anim');
+        
         membri.forEach(m => {
+            if (this.anims.exists(`${m}_idle_anim`)) bandSprites[m].play(`${m}_idle_anim`);
             this.tweens.add({ targets: bandSprites[m], alpha: 0, y: 700, duration: 500 * mTempo });
         });
     });
 
-    // MINUTO 2:45 (165s) - Furgone schizza via
-    this.time.delayedCall(165000 * mTempo, () => {
+    // MINUTO 4:20 (260s) - Furgone schizza via
+    this.time.delayedCall(260000 * mTempo, () => {
         furgone.setFlipX(false); 
         if (this.anims.exists('furgone_run_anim')) furgone.play('furgone_run_anim');
-        this.tweens.add({ targets: furgone, x: -1000, duration: 2000 * mTempo, ease: 'Power2' });
+        this.tweens.add({ targets: furgone, x: -1000, duration: 3000 * mTempo, ease: 'Power2' });
     });
-    // ==========================================================================================
 }
 
 function update() {
