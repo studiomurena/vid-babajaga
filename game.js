@@ -24,7 +24,7 @@ let poliziotti = [];
 let baba, furgone;
 let creatureGabbie = [];
 let ostacoliBosco = [];
-let zombiesBosco = []; // Array dedicato per gli zombie fiamma
+let zombiesBosco = [];
 let spawnZombieEvent;
 
 let faseVideo = 1; // 1: Milano1, 2: Bosco, 3: Metro, 4: Milano2
@@ -97,23 +97,19 @@ function create() {
     bg4.setDepth(0.65).setVisible(false); pav4.setDepth(2).setVisible(false);
 
     // ==========================================================================================
-    // --- IL TRICK DELL'OMBRA (DEPTH FIX + REINFORCED) ---
-    // Questi grafici creano la profondità tra i piani
-    
-    // Gradiente verticale nero DIETRO al pavimento (Depth 1.5) per sfumare l'orizzonte (Reso più denso)
+    // --- IL TRICK DELL'OMBRA ---
     let ombraSfondo = this.add.graphics();
     ombraSfondo.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 1, 1);
-    ombraSfondo.fillRect(0, yPavimento - 180, 1920, 180); // Più ampia e scura
+    ombraSfondo.fillRect(0, yPavimento - 180, 1920, 180); 
     ombraSfondo.setDepth(1.5); 
     
-    // Gradiente verticale nero SOPRA al pavimento (Depth 2.1) per ancorare i piedi (Reso più denso)
     let ombraPavimento = this.add.graphics();
-    ombraPavimento.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.9, 0.9, 0, 0); // Più denso
-    ombraPavimento.fillRect(0, yPavimento, 1920, 70); // Più profonda
+    ombraPavimento.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.9, 0.9, 0, 0); 
+    ombraPavimento.fillRect(0, yPavimento, 1920, 70); 
     ombraPavimento.setDepth(2.1); 
     // ==========================================================================================
 
-    // --- EFFETTI SPECIALI (Overlay e Lampi) ---
+    // --- EFFETTI SPECIALI ---
     flashRect = this.add.rectangle(960, 540, 1920, 1080, 0xffffff).setDepth(100).setAlpha(0);
     dreamOverlay = this.add.rectangle(960, 540, 1920, 1080, 0x440066).setDepth(90).setAlpha(0).setBlendMode(Phaser.BlendModes.SCREEN);
 
@@ -137,7 +133,7 @@ function create() {
                 this.anims.create({
                     key: `${char}_${anim}_anim`,
                     frames: this.anims.generateFrameNumbers(`${char}_${anim}`),
-                    frameRate: 15, repeat: (anim === 'fall' || anim === 'fall2') ? 0 : -1 // Fall non loopa
+                    frameRate: 15, repeat: (anim === 'fall' || anim === 'fall2') ? 0 : -1
                 });
             }
         });
@@ -148,20 +144,22 @@ function create() {
 
     // --- 3. INSERIMENTO ATTORI ---
     // ==========================================================================================
-    // --- CLUSTER BAND SPOSTATO IN AVANTI (+150px) ---
+    // --- LA BAND C'È DA SUBITO ED È VISIBILE ---
     let posizioniBandX = { 'carma2': 750, 'ferraz2': 850, 'mauri2': 950, 'nan2': 1050, 'falcon2': 1150 };
-    // ==========================================================================================
     
     membri.forEach(m => {
-        // Appaiono a x:0 perché sono nel furgone, poi scendono
-        bandSprites[m] = this.add.sprite(0, 780, `${m}_walk`).setDepth(4).setScale(2).setVisible(false);
+        bandSprites[m] = this.add.sprite(posizioniBandX[m], 780, `${m}_walk`).setDepth(4).setScale(2);
         let startAnim = this.anims.exists(`${m}_walk_anim`) ? `${m}_walk_anim` : (this.anims.exists(`${m}_idle_anim`) ? `${m}_idle_anim` : `${m}_run_anim`);
         if (startAnim) bandSprites[m].play(startAnim);
     });
+    // ==========================================================================================
 
     baba = this.add.sprite(2200, 750, 'baba_idle').setDepth(5).setScale(2.5).setFlipX(true);
-    // FURGONE PIÙ PICCOLO (Scala 2.0)
-    furgone = this.add.sprite(960, 650, 'furgone_run').setDepth(6).setScale(2.0).setFlipX(true);
+    
+    // ==========================================================================================
+    // --- IL FURGONE NASCE INVISIBILE E FUORI SCHERMO ---
+    furgone = this.add.sprite(2500, 650, 'furgone_run').setDepth(6).setScale(4.5).setFlipX(true).setVisible(false);
+    // ==========================================================================================
 
     // --- SCENOGRAFIA ZONA 2 (Bosco) ---
     for(let i=0; i<4; i++) {
@@ -172,13 +170,10 @@ function create() {
     }
 
     // --- SCENOGRAFIA ZONA 3 (Metro: Tutti e 10 i Mostri GIGANTI) ---
-    // Pool di 10 creature miste
     let poolCreature = Phaser.Utils.Array.Shuffle([...creature, ...creature]).slice(0, 10);
     
     poolCreature.forEach((c, i) => {
-        // ==========================================================================================
-        // --- MOSTRI UMANOIDI QUASI GRANDI COME STUDIO MURENA (Scala 1.95) ---
-        let creatura = this.add.sprite(2000 + (i*700), 800, `${c}_idle`).setDepth(2.5).setScale(1.95).setVisible(false); // Depth 2.5 per stare dietro band(4) quando seguono
+        let creatura = this.add.sprite(2000 + (i*700), 800, `${c}_idle`).setDepth(2.5).setScale(1.95).setVisible(false); 
         
         let fallBackAnim = this.anims.exists(`${c}_idle_anim`) ? `${c}_idle_anim` : 
                           (this.anims.exists(`${c}_dance_anim`) ? `${c}_dance_anim` : 
@@ -186,14 +181,14 @@ function create() {
                           
         if (fallBackAnim) creatura.play(fallBackAnim);
         
-        let gabbia = this.add.graphics().setDepth(2.8).setVisible(false); // Sbarre laser viola davanti
+        let gabbia = this.add.graphics().setDepth(2.8).setVisible(false); 
         creatura.gabbiaRef = gabbia;
         creatura.liberata = false;
         creatura.baseX = 2000 + (i*700);
         creatureGabbie.push(creatura);
     });
 
-    // --- EVENTO GENERATORE ZOMBIE BOSCO (Cielo dietro & Fiamme davanti) ---
+    // --- EVENTO GENERATORE ZOMBIE BOSCO ---
     spawnZombieEvent = this.time.addEvent({
         delay: 1100 * mTempo, 
         loop: true,
@@ -202,34 +197,30 @@ function create() {
                 let pioveDalCielo = Math.random() > 0.5;
                 
                 if (pioveDalCielo) {
-                    // 1) CADE DAL CIELO (Sempre dietro di noi)
-                    let startX = Phaser.Math.Between(50, 450); // Dietro alla band cluster (ora 750+)
+                    let startX = Phaser.Math.Between(50, 450); 
                     let zop = this.add.sprite(startX, -200, 'copzombie_run').setDepth(4).setScale(2);
-                    zop.setFlipX(false); // Ci guarda (destra)
+                    zop.setFlipX(false); 
                     if (this.anims.exists('copzombie_run_anim')) zop.play('copzombie_run_anim');
                     
                     this.tweens.add({
                         targets: zop, y: 780, angle: 360, duration: 1000 * mTempo, ease: 'Bounce.easeOut',
                         onComplete: () => {
                             zop.angle = 0;
-                            // Rincorre un po' e sfuma
                             this.tweens.add({ targets: zop, x: startX + 150, duration: 2500 * mTempo });
                             this.tweens.add({ targets: zop, alpha: 0, duration: 1000 * mTempo, delay: 1500 * mTempo, onComplete: () => zop.destroy() });
                         }
                     });
                 } else {
-                    // 2) APPARE DAVANTI DALLE FIAMME E ASPETTA
-                    let startX = Phaser.Math.Between(1500, 1920); // Davanti alla band cluster
+                    let startX = Phaser.Math.Between(1500, 1920); 
                     let zop = this.add.sprite(startX, 780, 'copzombie_idle').setDepth(4).setScale(2);
-                    zop.setFlipX(true); // Guarda noi (sinistra) e aspetta
+                    zop.setFlipX(true); 
                     if (this.anims.exists('copzombie_idle_anim')) zop.play('copzombie_idle_anim');
                     zop.customState = 'waiting';
                     
-                    // Effetto Fiamma Spettacolare
                     let flame = this.add.circle(startX, 780, 80, 0xff5500).setDepth(4.1).setBlendMode(Phaser.BlendModes.ADD);
                     this.tweens.add({ targets: flame, scale: 2.5, alpha: 0, duration: 600 * mTempo, onComplete: () => flame.destroy() });
                     
-                    zombiesBosco.push(zop); // Lo aggiunge all'array da aggiornare
+                    zombiesBosco.push(zop); 
                 }
             }
         }
@@ -251,7 +242,6 @@ function create() {
             let cop = this.add.sprite(-200 - (i*150), 780, 'cop_run').setDepth(4).setScale(2);
             if (this.anims.exists('cop_run_anim')) cop.play('cop_run_anim');
             poliziotti.push(cop);
-            // I cop si fermano a x: 50+80=130/210/290, cluster band è ora a 750+. Ottima separazione!
             this.tweens.add({ targets: cop, x: 50 + (i*80), duration: 2000 * mTempo, ease: 'Linear' });
         }
     });
@@ -270,16 +260,11 @@ function create() {
         this.tweens.add({ targets: flashRect, alpha: 1, duration: 500 * mTempo, yoyo: true, hold: 500 * mTempo });
     });
 
-    // MINUTO 0:42 (42.5s) - BOSCO (Sogno Lucido Maximo, Furgone Spun-off)
+    // MINUTO 0:42 (42.5s) - BOSCO
     this.time.delayedCall(42500 * mTempo, () => {
         faseVideo = 2;
         velocitaScorrimento = 5; 
         baba.x = 2500; 
-        
-        // ==========================================================================================
-        // --- FURGONE SPARISCE NEL BOSCHETTO (Exits Pulito) ---
-        furgone.setVisible(false); // Via, non lo vedi mai bloccato a metà
-        // ==========================================================================================
 
         bg1.setVisible(false); pav1.setVisible(false);
         bg2.setVisible(true); pav2.setVisible(true);
@@ -297,7 +282,6 @@ function create() {
             if (anim) bandSprites[m].play(anim); 
         });
 
-        // Elimina gli zombie rimasti
         zombiesBosco.forEach(z => {
             if(z.active) this.tweens.add({targets: z, alpha: 0, duration: 500, onComplete: () => z.destroy()});
         });
@@ -337,7 +321,7 @@ function create() {
         });
     });
 
-    // MINUTO 1:20 (80s) - RISVEGLIO IN METRO (ZONA 3)
+    // MINUTO 1:20 (80s) - RISVEGLIO IN METRO
     this.time.delayedCall(80500 * mTempo, () => {
         faseVideo = 3;
         bossFightBosco = false;
@@ -349,9 +333,8 @@ function create() {
         baba.setTint(0xffffff); 
         baba.x = 2500;
 
-        // Band si rialza e cammina nella metro cluster spostata (x:750+)
         membri.forEach(m => { 
-            bandSprites[m].x = posizioniBandX[m]; // Reset al nuovo cluster
+            bandSprites[m].x = posizioniBandX[m]; 
             let anim = this.anims.exists(`${m}_walk_anim`) ? `${m}_walk_anim` : `${m}_idle_anim`;
             if (anim) bandSprites[m].play(anim); 
         });
@@ -406,7 +389,6 @@ function create() {
         faseVideo = 4;
         velocitaScorrimento = 4; 
         
-        // Band cluster spostata x:750+ cammina veloce
         membri.forEach(m => { 
             let anim = this.anims.exists(`${m}_run_anim`) ? `${m}_run_anim` : `${m}_walk_anim`;
             if (anim) bandSprites[m].play(anim); 
@@ -426,13 +408,12 @@ function create() {
         });
     });
 
-    // MINUTO 2:35 (155s) - Arriva il Furgone Titanic (Scala Ridotta a 4.5)
+    // ==========================================================================================
+    // --- MINUTO 2:35 (155s) - FINALMENTE ARRIVA IL FURGONE ---
     this.time.delayedCall(155000 * mTempo, () => {
         furgone.x = 2500;
-        furgone.setScale(4.5); // TITANIC MA RIDOTTO
-        furgone.setVisible(true);
+        furgone.setVisible(true); // COMPARE SOLO ORA!
         if (this.anims.exists('furgone_run_anim')) furgone.play('furgone_run_anim');
-        // Target x:960 è centrato rispetto al nuovo cluster 750-1150 (centro ~950)
         this.tweens.add({ targets: furgone, x: 960, duration: 3000 * mTempo, ease: 'Power2' });
     });
 
@@ -450,10 +431,10 @@ function create() {
         if (this.anims.exists('furgone_run_anim')) furgone.play('furgone_run_anim');
         this.tweens.add({ targets: furgone, x: -1000, duration: 2000 * mTempo, ease: 'Power2' });
     });
+    // ==========================================================================================
 }
 
 function update() {
-    // --- CAMERA E SOGNO LUCIDO DINAMICO ---
     let intensity = {
         1: { z: 0.005, a: 0.1, alpha: 0.1 },   
         2: { z: 0.030, a: 0.6, alpha: 0.4 },   
@@ -468,7 +449,6 @@ function update() {
         dreamOverlay.setAlpha(curInt.alpha + Math.sin(this.time.now * 0.005) * (curInt.alpha * 0.2));
     }
 
-    // --- LOGICA ZOMBIE FIAMMA ---
     if (faseVideo === 2 && !bossFightBosco) {
         for (let i = zombiesBosco.length - 1; i >= 0; i--) {
             let z = zombiesBosco[i];
@@ -478,7 +458,7 @@ function update() {
             }
             if (z.customState === 'waiting') {
                 z.x -= velocitaScorrimento * 3; 
-                if (z.x < 650) { // Ci ha sorpassato (nuovo cluster è 750+)
+                if (z.x < 650) { 
                     z.customState = 'chasing';
                     z.setFlipX(false); 
                     if (this.anims.exists('copzombie_run_anim')) z.play('copzombie_run_anim');
@@ -490,7 +470,6 @@ function update() {
         }
     }
 
-    // --- SCORRIMENTO SFONDI E OSTACOLI ---
     if (faseVideo === 1) {
         bg1.tilePositionX += velocitaScorrimento * 0.5;
         pav1.tilePositionX += velocitaScorrimento * 3;
@@ -508,21 +487,18 @@ function update() {
         bg3.tilePositionX += velocitaScorrimento * 0.5;
         pav3.tilePositionX += velocitaScorrimento * 3;
         
-        // Logica Gabbie e Liberazione (Profondità perfette)
         creatureGabbie.forEach(c => {
             if (!c.liberata) {
                 c.x -= velocitaScorrimento * 3;
                 
-                // Aggiorna Sbarre Laser (Allargate per mostri giganti 1.95)
                 c.gabbiaRef.clear();
                 c.gabbiaRef.lineStyle(6, 0xff00ff, 0.8);
                 for(let s=0; s<6; s++) {
-                    c.gabbiaRef.moveTo(c.x - 120 + (s*40), 600); // Allargate (-120), abbassate testa
+                    c.gabbiaRef.moveTo(c.x - 120 + (s*40), 600); 
                     c.gabbiaRef.lineTo(c.x - 120 + (s*40), 950);
                 }
                 c.gabbiaRef.strokePath();
 
-                // Se la creatura arriva vicino alla band cluster (x: 1250), si libera!
                 if (c.x < 1250) {
                     c.liberata = true;
                     c.gabbiaRef.clear(); 
@@ -531,7 +507,6 @@ function update() {
                     let runAnim = this.anims.exists(`${baseKey}_run_anim`) ? `${baseKey}_run_anim` : `${baseKey}_walk_anim`;
                     if (runAnim) c.play(runAnim);
                     
-                    // Si sposta dietro la band cluster (tra 100 e 650)
                     this.tweens.add({ 
                         targets: c, 
                         x: Phaser.Math.Between(100, 650), 
