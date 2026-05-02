@@ -28,10 +28,11 @@ let ostacoliBosco = [];
 let faseVideo = 1; // 1: Milano1, 2: Bosco, 3: Metro, 4: Milano2
 let velocitaScorrimento = 2; // Velocità base
 
-const membri = ['carma', 'ferraz', 'mauri', 'nan', 'falcon'];
+// --- ROSTER V2 E FREAKS CONFERMATI ---
+const membri = ['carma2', 'ferraz2', 'mauri2', 'nan2', 'falcon2'];
 const guardie = ['cop', 'copzombie'];
-const creature = ['drogato', 'murena', 'pigeon'];
-const animazioni = ['idle', 'run', 'walk', 'attack', 'jump', 'hurt', 'fall', 'dodge'];
+const creature = ['drogato', 'murena', 'pigeon', 'beeman', 'franken', 'nano', 'ornitorincoman', 'orologioman', 'radioman'];
+const animazioni = ['idle', 'run', 'walk', 'attack', 'jump', 'hurt', 'fall', 'hit_react', 'dance'];
 
 function preload() {
     // --- SFONDI UFFICIALI ---
@@ -40,7 +41,6 @@ function preload() {
     this.load.image('bg3', 'assets/metro-baba3.png');
     this.load.image('bg4', 'assets/milano-baba4.png');
 
-    // --- PAVIMENTI UFFICIALI (nomi corretti!) ---
     this.load.image('pav1', 'assets/pavimento-milano-baba.png');
     this.load.image('pav2', 'assets/pavimento-boschetto.png');
     this.load.image('pav3', 'assets/pavimento-metro.png');
@@ -54,13 +54,14 @@ function preload() {
     // Furgone
     this.load.spritesheet('furgone_idle', 'assets/furgone-idle.png', { frameWidth: 256, frameHeight: 256 });
     this.load.spritesheet('furgone_run', 'assets/furgone-run.png', { frameWidth: 256, frameHeight: 256 });
+    this.load.spritesheet('furgone_spins', 'assets/furgone-spins.png', { frameWidth: 256, frameHeight: 256 });
 
     // Baba Jaga
-    ['idle', 'attack', 'run'].forEach(a => {
+    ['idle', 'attack', 'run', 'walk', 'jump'].forEach(a => {
         this.load.spritesheet(`baba_${a}`, `assets/baba-${a}.png`, { frameWidth: 256, frameHeight: 256 });
     });
 
-    // Tutti gli altri Sprite (Membri, Cops, Creature) affettati chirurgicamente
+    // Caricamento massivo di tutti gli sprite affettati
     let tutti = [...membri, ...guardie, ...creature];
     tutti.forEach(char => {
         animazioni.forEach(anim => {
@@ -79,7 +80,6 @@ function create() {
     let fb1 = this.add.rectangle(960, 540, 1920, 1080, 0x1a1a1a).setDepth(0);
     bg1 = this.textures.exists('bg1') ? this.add.tileSprite(960, 540, 1920, 1080, 'bg1') : fb1;
     let fp1 = this.add.rectangle(960, yPavimento, 1920, 300, 0x333333).setDepth(2);
-    // Usa 'pav1' che ora corrisponde a assets/pavimento-milano-baba.png
     pav1 = this.textures.exists('pav1') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav1') : fp1;
     bg1.setDepth(0); pav1.setDepth(2);
 
@@ -87,7 +87,6 @@ function create() {
     let fb2 = this.add.rectangle(960, 540, 1920, 1080, 0x051105).setDepth(0).setVisible(false);
     bg2 = this.textures.exists('bg2') ? this.add.tileSprite(960, 540, 1920, 1080, 'bg2') : fb2;
     let fp2 = this.add.rectangle(960, yPavimento, 1920, 300, 0x1c2b1c).setDepth(2).setVisible(false);
-    // Usa 'pav2' che ora corrisponde a assets/pavimento-boschetto.png
     pav2 = this.textures.exists('pav2') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav2') : fp2;
     bg2.setDepth(0).setVisible(false); pav2.setDepth(2).setVisible(false);
 
@@ -95,7 +94,6 @@ function create() {
     let fb3 = this.add.rectangle(960, 540, 1920, 1080, 0x0d1b2a).setDepth(0).setVisible(false);
     bg3 = this.textures.exists('bg3') ? this.add.tileSprite(960, 540, 1920, 1080, 'bg3') : fb3;
     let fp3 = this.add.rectangle(960, yPavimento, 1920, 300, 0x415a77).setDepth(2).setVisible(false);
-    // Usa 'pav3' che ora corrisponde a assets/pavimento-metro.png
     pav3 = this.textures.exists('pav3') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav3') : fp3;
     bg3.setDepth(0).setVisible(false); pav3.setDepth(2).setVisible(false);
 
@@ -103,14 +101,13 @@ function create() {
     let fb4 = this.add.rectangle(960, 540, 1920, 1080, 0x111111).setDepth(0).setVisible(false);
     bg4 = this.textures.exists('bg4') ? this.add.tileSprite(960, 540, 1920, 1080, 'bg4') : fb4;
     let fp4 = this.add.rectangle(960, yPavimento, 1920, 300, 0x222222).setDepth(2).setVisible(false);
-    // Usa 'pav4' che ora corrisponde a assets/pavimento-milano-baba2.png
     pav4 = this.textures.exists('pav4') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav4') : fp4;
     bg4.setDepth(0).setVisible(false); pav4.setDepth(2).setVisible(false);
 
     // Flash per il teletrasporto magico
     flashRect = this.add.rectangle(960, 540, 1920, 1080, 0xffffff).setDepth(100).setAlpha(0);
 
-    // --- 2. GENERAZIONE ANIMAZIONI ---
+    // --- 2. GENERAZIONE ANIMAZIONI (Solo quelle caricate con successo) ---
     let tuttiAsset = [...membri, ...guardie, ...creature, 'baba'];
     tuttiAsset.forEach(char => {
         animazioni.forEach(anim => {
@@ -128,27 +125,37 @@ function create() {
     if (this.textures.exists('furgone_idle')) this.anims.create({ key: 'furgone_idle_anim', frames: this.anims.generateFrameNumbers('furgone_idle'), frameRate: 10, repeat: -1 });
 
     // --- 3. INSERIMENTO ATTORI SULLA SCENA ---
-    let posizioniX = { 'carma': 400, 'ferraz': 600, 'mauri': 800, 'nan': 1000, 'falcon': 1200 };
+    // --- AGGIORNAMENTO: Band molto più compatta ---
+    // (Prima spaziatura 200px: 400->1200 | ORA spaziatura 100px: 600->1000)
+    let posizioniX = { 'carma2': 600, 'ferraz2': 700, 'mauri2': 800, 'nan2': 900, 'falcon2': 1000 };
     
     membri.forEach(m => {
         bandSprites[m] = this.add.sprite(posizioniX[m], 780, `${m}_walk`).setDepth(4).setScale(2);
-        if (this.anims.exists(`${m}_walk_anim`)) bandSprites[m].play(`${m}_walk_anim`);
+        let startAnim = this.anims.exists(`${m}_walk_anim`) ? `${m}_walk_anim` : (this.anims.exists(`${m}_idle_anim`) ? `${m}_idle_anim` : `${m}_run_anim`);
+        if (startAnim) bandSprites[m].play(startAnim);
     });
 
     baba = this.add.sprite(2200, 750, 'baba_idle').setDepth(5).setScale(2.5).setFlipX(true);
     furgone = this.add.sprite(2500, 700, 'furgone_run').setDepth(6).setScale(3.5).setFlipX(true);
 
-    // --- SCENOGRAFIA E NEMICI ZONA 2 (Boschetto) ---
+    // --- SCENOGRAFIA ZONA 2 (Boschetto) ---
     for(let i=0; i<4; i++) {
         let p = this.add.image(2000 + (i*800), 600, 'palo').setDepth(1).setScale(1.5).setVisible(false);
         let b = this.add.image(2400 + (i*800), 850, 'barrel').setDepth(3).setScale(1.2).setVisible(false);
         ostacoliBosco.push(p, b);
     }
 
-    // --- SCENOGRAFIA ZONA 3 (Gabbie Metro) ---
-    creature.forEach((c, i) => {
-        let creatura = this.add.sprite(2000 + (i*1000), 750, `${c}_idle`).setDepth(1).setScale(1.5).setVisible(false);
-        if (this.anims.exists(`${c}_idle_anim`)) creatura.play(`${c}_idle_anim`);
+    // --- SCENOGRAFIA ZONA 3 (Gabbie Metro: Sceglie 5 creature RANDOM) ---
+    let creatureRandom = Phaser.Utils.Array.Shuffle([...creature]).slice(0, 5);
+    
+    creatureRandom.forEach((c, i) => {
+        let creatura = this.add.sprite(2000 + (i*800), 750, `${c}_idle`).setDepth(1).setScale(1.5).setVisible(false);
+        
+        let fallBackAnim = this.anims.exists(`${c}_idle_anim`) ? `${c}_idle_anim` : 
+                          (this.anims.exists(`${c}_dance_anim`) ? `${c}_dance_anim` : 
+                          (this.anims.exists(`${c}_walk_anim`) ? `${c}_walk_anim` : `${c}_run_anim`));
+                          
+        if (fallBackAnim) creatura.play(fallBackAnim);
         
         let gabbia = this.add.graphics().setDepth(3).setVisible(false);
         gabbia.lineStyle(6, 0xff00ff, 0.8);
@@ -159,7 +166,7 @@ function create() {
         gabbia.strokePath();
         
         creatura.gabbiaRef = gabbia;
-        creatura.baseX = 2000 + (i*1000);
+        creatura.baseX = 2000 + (i*800);
         creatureGabbie.push(creatura);
     });
 
@@ -167,22 +174,28 @@ function create() {
     // --- 4. LA REGIA DEL VIDEO (TIMELINE) ---
     // ==========================================
 
-    // MINUTO 0:20 (20s) - Poliziotti
+    // MINUTO 0:20 (20s) - Poliziotti all'inseguimento
     this.time.delayedCall(20000 * mTempo, () => {
         velocitaScorrimento = 8;
-        membri.forEach(m => { if (this.anims.exists(`${m}_run_anim`)) bandSprites[m].play(`${m}_run_anim`); });
+        membri.forEach(m => { 
+            let anim = this.anims.exists(`${m}_run_anim`) ? `${m}_run_anim` : `${m}_walk_anim`;
+            if (anim) bandSprites[m].play(anim); 
+        });
         
         for(let i=0; i<3; i++) {
             let cop = this.add.sprite(-200 - (i*150), 780, 'cop_run').setDepth(4).setScale(2);
             if (this.anims.exists('cop_run_anim')) cop.play('cop_run_anim');
             poliziotti.push(cop);
-            this.tweens.add({ targets: cop, x: 150 + (i*100), duration: 2000 * mTempo, ease: 'Linear' });
+            // --- AGGIORNAMENTO: Target molto più a sinistra per dare distanza ---
+            // (Prima si fermavano a 150/250/350, troppo vicini a carma che sta a 600 ORA)
+            this.tweens.add({ targets: cop, x: 50 + (i*80), duration: 2000 * mTempo, ease: 'Linear' });
         }
     });
 
-    // MINUTO 0:35 (35s) - Baba Jaga
+    // MINUTO 0:35 (35s) - Baba Jaga entra in scena
     this.time.delayedCall(35000 * mTempo, () => {
         if (this.anims.exists('baba_idle_anim')) baba.play('baba_idle_anim');
+        // Baba davanti
         this.tweens.add({ targets: baba, x: 1600, duration: 2000 * mTempo, ease: 'Power2' });
     });
 
@@ -205,7 +218,9 @@ function create() {
 
         poliziotti.forEach(p => p.destroy()); poliziotti = [];
         for(let i=0; i<4; i++) {
-            let zop = this.add.sprite(50 + (i*100), 780, 'copzombie_run').setDepth(4).setScale(2);
+            // --- AGGIORNAMENTO: Zombie Spawn più a sinistra ---
+            // (Spawnano molto più staccati dalla band che sta a 600+)
+            let zop = this.add.sprite(50 + (i*80), 780, 'copzombie_run').setDepth(4).setScale(2);
             if (this.anims.exists('copzombie_run_anim')) zop.play('copzombie_run_anim');
             poliziotti.push(zop);
         }
@@ -239,19 +254,25 @@ function create() {
     // MINUTO 2:25 (145s) - Si fermano
     this.time.delayedCall(145000 * mTempo, () => {
         velocitaScorrimento = 0; 
-        membri.forEach(m => { if (this.anims.exists(`${m}_idle_anim`)) bandSprites[m].play(`${m}_idle_anim`); });
+        membri.forEach(m => { 
+            let anim = this.anims.exists(`${m}_idle_anim`) ? `${m}_idle_anim` : `${m}_walk_anim`;
+            if (anim) bandSprites[m].play(anim); 
+        });
     });
 
     // MINUTO 2:35 (155s) - Arriva il Furgone
     this.time.delayedCall(155000 * mTempo, () => {
         if (this.anims.exists('furgone_run_anim')) furgone.play('furgone_run_anim');
-        this.tweens.add({ targets: furgone, x: 960, duration: 3000 * mTempo, ease: 'Power2' });
+        // --- AGGIORNAMENTO: Target furgone centrato sul nuovo cluster (x:800) ---
+        // (Il cluster è 600-1000, 800 è il centro perfetto)
+        this.tweens.add({ targets: furgone, x: 800, duration: 3000 * mTempo, ease: 'Power2' });
     });
 
     // MINUTO 2:38 (158s) - Furgone Inchioda
     this.time.delayedCall(158000 * mTempo, () => {
         if (this.anims.exists('furgone_idle_anim')) furgone.play('furgone_idle_anim');
         membri.forEach(m => {
+            // Salgono
             this.tweens.add({ targets: bandSprites[m], alpha: 0, y: 700, duration: 500 * mTempo });
         });
     });
@@ -265,7 +286,6 @@ function create() {
 }
 
 function update() {
-    // Gestione dello scorrimento dinamico dei fondali in base alla fase
     if (faseVideo === 1) {
         bg1.tilePositionX += velocitaScorrimento * 0.5;
         pav1.tilePositionX += velocitaScorrimento * 3;
@@ -273,7 +293,6 @@ function update() {
         bg2.tilePositionX += velocitaScorrimento * 0.5;
         pav2.tilePositionX += velocitaScorrimento * 3;
         
-        // Loop ostacoli del bosco
         ostacoliBosco.forEach(o => {
             o.x -= velocitaScorrimento * 3;
             if (o.x < -200) o.x = 2500 + Math.random() * 1000;
@@ -282,11 +301,9 @@ function update() {
         bg3.tilePositionX += velocitaScorrimento * 0.5;
         pav3.tilePositionX += velocitaScorrimento * 3;
         
-        // Parallasse delle gabbie (si muovono con il pavimento, poi resettano a destra)
         creatureGabbie.forEach(c => {
             c.x -= velocitaScorrimento * 3;
             
-            // Aggiorna anche la posizione delle sbarre grafiche in tempo reale
             c.gabbiaRef.clear();
             c.gabbiaRef.lineStyle(6, 0xff00ff, 0.8);
             for(let s=0; s<6; s++) {
