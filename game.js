@@ -25,7 +25,7 @@ let poliziotti = [];
 let baba, furgone;
 let creatureGabbie = [];
 let ostacoliBosco = [];
-let stregheBosco = []; // ARRAY SOSTITUITO: ora ci sono le streghe glitchate
+let stregheBosco = []; 
 let spawnStregheEvent;
 
 let faseVideo = 1; // 1: Milano1, 2: Bosco, 3: Metro, 4: Milano2
@@ -35,7 +35,6 @@ let bossFightBosco = false;
 // --- ROSTER V2 E FREAKS CONFERMATI ---
 const membri = ['carma2', 'ferraz2', 'mauri2', 'nan2', 'falcon2'];
 const guardie = ['cop', 'copzombie']; 
-// Aggiunta 'strega' alle creature per fargli caricare in loop i frame
 const creature = ['drogato', 'murena', 'pigeon', 'beeman', 'franken', 'nano', 'ornitorincoman', 'orologioman', 'radioman', 'strega'];
 const animazioni = ['idle', 'run', 'walk', 'attack', 'jump', 'hurt', 'fall', 'hit_react', 'dance'];
 
@@ -48,8 +47,8 @@ function preload() {
     this.load.image('bg2', 'assets/boschetto2.png');
     this.load.image('bg3', 'assets/metro-baba3.png');
 
-    // ZONA 4 (Solo Skyline3)
-    this.load.image('bg4', 'assets/skyline3.png');     
+    // ZONA 4 (Nuovo Skyline)
+    this.load.image('bg4', 'assets/skyline10.png');     
 
     // PAVIMENTI
     this.load.image('pav1', 'assets/pavimento-milano-baba.png');
@@ -78,7 +77,7 @@ function preload() {
 }
 
 function create() {
-    let yPavimento = 930; // Il pavimento inizia qui
+    let yPavimento = 930; 
     
     // ==========================================================================================
     // --- 1. SETTAGGIO SFONDI, CIELI E PAVIMENTI ---
@@ -106,7 +105,7 @@ function create() {
     pav3 = this.textures.exists('pav3') ? this.add.tileSprite(960, yPavimento, 1920, 300, 'pav3') : fp3;
     bg3.setDepth(0).setAlpha(0.5).setVisible(false); pav3.setDepth(2).setVisible(false);
 
-    // ZONA 4: Solo Skyline3
+    // ZONA 4: Solo Skyline (Copre tutto sopra il pavimento)
     let fb4 = this.add.rectangle(960, yPavimento/2, 1920, yPavimento, 0x111111).setDepth(0).setVisible(false);
     bg4 = this.textures.exists('bg4') ? this.add.tileSprite(960, yPavimento/2, 1920, yPavimento, 'bg4') : fb4;
     bg4.setDepth(0).setVisible(false); 
@@ -178,11 +177,16 @@ function create() {
         ostacoliBosco.push(p, d); 
     }
 
-    // --- SCENOGRAFIA ZONA 3 (Metro: 15 MOSTRI molto più distanziati) ---
+    // ==========================================================================================
+    // --- SCENOGRAFIA ZONA 3 (Metro: Variabilità scala e Distanza per più "Silenzio") ---
     let poolCreature = Phaser.Utils.Array.Shuffle([...creature, ...creature, ...creature]).filter(c => c !== 'strega').slice(0, 15); 
     
     poolCreature.forEach((c, i) => {
-        let creatura = this.add.sprite(2000 + (i*1200), 800, `${c}_idle`).setDepth(2.5).setScale(1.95).setVisible(false); 
+        // Scala casuale tra 1.75 e 1.95 (Carma è 2.0, quindi mai più alti di lui)
+        let scaleVariabile = Phaser.Math.FloatBetween(1.75, 1.95);
+        
+        // Moltiplicatore distanza portato a 1800 per maggiore distacco tra uno spawn e l'altro
+        let creatura = this.add.sprite(2000 + (i*1800), 800, `${c}_idle`).setDepth(2.5).setScale(scaleVariabile).setVisible(false); 
         
         let fallBackAnim = this.anims.exists(`${c}_idle_anim`) ? `${c}_idle_anim` : 
                           (this.anims.exists(`${c}_dance_anim`) ? `${c}_dance_anim` : 
@@ -193,11 +197,12 @@ function create() {
         let gabbia = this.add.graphics().setDepth(2.8).setVisible(false); 
         creatura.gabbiaRef = gabbia;
         creatura.liberata = false;
-        creatura.baseX = 2000 + (i*1200);
+        creatura.baseX = 2000 + (i*1800);
         creatureGabbie.push(creatura);
     });
+    // ==========================================================================================
 
-    // --- EVENTO GENERATORE STREGHE BOSCO (Glitch, Spawn e Drop) ---
+    // --- EVENTO GENERATORE STREGHE BOSCO ---
     spawnStregheEvent = this.time.addEvent({
         delay: 1100 * mTempo, 
         loop: true,
@@ -223,14 +228,16 @@ function create() {
                         }
                     });
 
+                    // ==========================================================================================
+                    // CADUTA REALISTICA (Senza rimbalzo)
                     this.tweens.add({
-                        targets: strega, y: 780, angle: 360, duration: 1000 * mTempo, ease: 'Bounce.easeOut',
+                        targets: strega, y: 780, duration: 600 * mTempo, ease: 'Quad.easeIn',
                         onComplete: () => {
-                            strega.angle = 0;
                             this.tweens.add({ targets: strega, x: startX + 100, duration: 2500 * mTempo });
                             this.tweens.add({ targets: strega, alpha: 0, duration: 1000 * mTempo, delay: 1500 * mTempo, onComplete: () => strega.destroy() });
                         }
                     });
+                    // ==========================================================================================
                 } else {
                     let startX = Phaser.Math.Between(1500, 1920); 
                     let strega = this.add.sprite(startX, 780, 'strega_idle').setDepth(4).setScale(2);
@@ -250,7 +257,7 @@ function create() {
                         }
                     });
 
-                    let flame = this.add.circle(startX, 780, 80, 0xff00ff).setDepth(4.1).setBlendMode(Phaser.BlendModes.ADD); // Fiamma glitchata fucsia
+                    let flame = this.add.circle(startX, 780, 80, 0xff00ff).setDepth(4.1).setBlendMode(Phaser.BlendModes.ADD); 
                     this.tweens.add({ targets: flame, scale: 2.5, alpha: 0, duration: 600 * mTempo, onComplete: () => flame.destroy() });
                     
                     stregheBosco.push(strega); 
@@ -314,7 +321,7 @@ function create() {
         });
     });
 
-    // MINUTO 1:45 (105s) - BOSCO BOSS: Arriva la Baba Matta e si ripulisce
+    // MINUTO 1:45 (105s) - BOSCO BOSS: Arriva la Baba Matta
     this.time.delayedCall(105000 * mTempo, () => {
         bossFightBosco = true; 
         velocitaScorrimento = 0; 
@@ -323,7 +330,6 @@ function create() {
             if (anim) bandSprites[m].play(anim); 
         });
 
-        // Eliminiamo le streghe rimanenti
         stregheBosco.forEach(s => {
             if(s.active) this.tweens.add({targets: s, alpha: 0, duration: 500, onComplete: () => s.destroy()});
         });
@@ -544,8 +550,7 @@ function update() {
     }
 
     if (faseVideo === 1) {
-        // --- AGGIUNTO IL MOVIMENTO PIANO PIANO DEL CIELO ---
-        sky1.tilePositionX += velocitaScorrimento * 0.2; // Scorrevolezza epica
+        sky1.tilePositionX += velocitaScorrimento * 0.2; 
         bg1.tilePositionX += velocitaScorrimento * 1; 
         pav1.tilePositionX += velocitaScorrimento * 3; 
     } else if (faseVideo === 2) {
