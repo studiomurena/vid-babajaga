@@ -134,7 +134,10 @@ function create() {
         delay: Phaser.Math.Between(4000, 7000) * mTempo,
         loop: true,
         callback: () => {
-            if (faseVideo === 1 || faseVideo === 4) {
+            // ==========================================================================================
+            // SOLO IN ZONA 1 ORA. La zona 4 è pulita e serena.
+            if (faseVideo === 1) {
+            // ==========================================================================================
                 lampoRect.fillColor = Phaser.Math.RND.pick([0xff8800, 0xffaa00, 0xffee88]);
                 this.tweens.add({ targets: lampoRect, alpha: 0.35, duration: 60, yoyo: true, repeat: Phaser.Math.Between(1, 3) });
             }
@@ -158,7 +161,7 @@ function create() {
     if (this.textures.exists('furgone_run')) this.anims.create({ key: 'furgone_run_anim', frames: this.anims.generateFrameNumbers('furgone_run'), frameRate: 20, repeat: -1 });
     if (this.textures.exists('furgone_idle')) this.anims.create({ key: 'furgone_idle_anim', frames: this.anims.generateFrameNumbers('furgone_idle'), frameRate: 10, repeat: -1 });
 
-    // --- 3. INSERIMENTO ATTORI (Cluster a x:750+) ---
+    // --- 3. INSERIMENTO ATTORI ---
     let posizioniBandX = { 'carma2': 750, 'ferraz2': 850, 'mauri2': 950, 'nan2': 1050, 'falcon2': 1150 };
     
     membri.forEach(m => {
@@ -177,15 +180,10 @@ function create() {
         ostacoliBosco.push(p, d); 
     }
 
-    // ==========================================================================================
-    // --- SCENOGRAFIA ZONA 3 (Metro: Variabilità scala e Distanza per più "Silenzio") ---
     let poolCreature = Phaser.Utils.Array.Shuffle([...creature, ...creature, ...creature]).filter(c => c !== 'strega').slice(0, 15); 
     
     poolCreature.forEach((c, i) => {
-        // Scala casuale tra 1.75 e 1.95 (Carma è 2.0, quindi mai più alti di lui)
         let scaleVariabile = Phaser.Math.FloatBetween(1.75, 1.95);
-        
-        // Moltiplicatore distanza portato a 1800 per maggiore distacco tra uno spawn e l'altro
         let creatura = this.add.sprite(2000 + (i*1800), 800, `${c}_idle`).setDepth(2.5).setScale(scaleVariabile).setVisible(false); 
         
         let fallBackAnim = this.anims.exists(`${c}_idle_anim`) ? `${c}_idle_anim` : 
@@ -200,9 +198,7 @@ function create() {
         creatura.baseX = 2000 + (i*1800);
         creatureGabbie.push(creatura);
     });
-    // ==========================================================================================
 
-    // --- EVENTO GENERATORE STREGHE BOSCO ---
     spawnStregheEvent = this.time.addEvent({
         delay: 1100 * mTempo, 
         loop: true,
@@ -216,7 +212,6 @@ function create() {
                     strega.setFlipX(false); 
                     if (this.anims.exists('strega_run_anim')) strega.play('strega_run_anim');
                     
-                    // FUNZIONE GLITCH
                     this.time.addEvent({
                         delay: 90, loop: true,
                         callback: () => {
@@ -228,8 +223,6 @@ function create() {
                         }
                     });
 
-                    // ==========================================================================================
-                    // CADUTA REALISTICA (Senza rimbalzo)
                     this.tweens.add({
                         targets: strega, y: 780, duration: 600 * mTempo, ease: 'Quad.easeIn',
                         onComplete: () => {
@@ -237,7 +230,6 @@ function create() {
                             this.tweens.add({ targets: strega, alpha: 0, duration: 1000 * mTempo, delay: 1500 * mTempo, onComplete: () => strega.destroy() });
                         }
                     });
-                    // ==========================================================================================
                 } else {
                     let startX = Phaser.Math.Between(1500, 1920); 
                     let strega = this.add.sprite(startX, 780, 'strega_idle').setDepth(4).setScale(2);
@@ -245,7 +237,6 @@ function create() {
                     if (this.anims.exists('strega_idle_anim')) strega.play('strega_idle_anim');
                     strega.customState = 'waiting';
                     
-                    // FUNZIONE GLITCH 
                     this.time.addEvent({
                         delay: 90, loop: true,
                         callback: () => {
@@ -270,7 +261,6 @@ function create() {
     // --- 4. LA REGIA DEL VIDEO (4:28 SCALATO) ---
     // ==========================================
 
-    // MINUTO 0:30 (30s) - Milano Inseguimento Lento
     this.time.delayedCall(30000 * mTempo, () => {
         velocitaScorrimento = 5; 
         membri.forEach(m => { 
@@ -286,18 +276,15 @@ function create() {
         }
     });
 
-    // MINUTO 0:45 (45s) - Baba Jaga entra a Milano
     this.time.delayedCall(45000 * mTempo, () => {
         if (this.anims.exists('baba_idle_anim')) baba.play('baba_idle_anim');
         this.tweens.add({ targets: baba, x: 1600, duration: 2000 * mTempo, ease: 'Power2' });
     });
 
-    // MINUTO 0:55 (55s) - BABA ATTACCA 
     this.time.delayedCall(55000 * mTempo, () => {
         if (this.anims.exists('baba_attack_anim')) baba.play('baba_attack_anim');
     });
 
-    // MINUTO 0:58 (58s) - Inizio Flash (Fade In Bianco)
     this.time.delayedCall(58000 * mTempo, () => {
         this.tweens.add({
             targets: flashRect,
@@ -321,7 +308,6 @@ function create() {
         });
     });
 
-    // MINUTO 1:45 (105s) - BOSCO BOSS: Arriva la Baba Matta
     this.time.delayedCall(105000 * mTempo, () => {
         bossFightBosco = true; 
         velocitaScorrimento = 0; 
@@ -347,7 +333,6 @@ function create() {
         this.tweens.add({ targets: baba, x: '+=20', y: '-=10', duration: 50, yoyo: true, repeat: -1 });
     });
 
-    // MINUTO 1:55 (115s) - BABA MATTA ATTACCA -> BAND HURT
     this.time.delayedCall(115000 * mTempo, () => {
         if (this.anims.exists('baba_attack_anim')) baba.play('baba_attack_anim');
         
@@ -357,14 +342,12 @@ function create() {
         });
     });
 
-    // MINUTO 2:00 (120s) - SCONFITTA -> BAND FALL
     this.time.delayedCall(120000 * mTempo, () => {
         membri.forEach(m => {
             if (this.anims.exists(`${m}_fall_anim`)) bandSprites[m].play(`${m}_fall_anim`);
         });
     });
 
-    // MINUTO 2:05 (125s) - DISTORSIONE TOTALE -> FLASH E INIZIO METRO
     this.time.delayedCall(125000 * mTempo, () => {
         this.cameras.main.zoomTo(3, 1500 * mTempo); 
         this.tweens.add({ targets: dreamOverlay, alpha: 1, duration: 1500 * mTempo });
@@ -383,6 +366,9 @@ function create() {
                     this.cameras.main.setAngle(0);
                     this.tweens.killTweensOf(baba);
                     baba.setTint(0xffffff); 
+                    
+                    // Assicuriamoci che non sia visibile in Metro prima del tempo
+                    baba.setAlpha(0);
                     baba.x = 2500;
 
                     membri.forEach(m => { 
@@ -404,7 +390,9 @@ function create() {
         });
     });
 
-    // MINUTO 3:20 (200s) - FINE METRO: BABA GIGANTE
+    // ==========================================================================================
+    // --- ENTRATA IN SCENA BABA (Niente più "pop" plastico) ---
+    // MINUTO 3:20 (200s) - BABA SCIVOLA DAL BUIO
     this.time.delayedCall(200000 * mTempo, () => {
         velocitaScorrimento = 0; 
         membri.forEach(m => { 
@@ -419,10 +407,22 @@ function create() {
             }
         });
 
-        baba.x = 1400; 
+        // Impostiamo la Baba gigante fuori schermo e trasparente
+        baba.x = 2500; 
         baba.setScale(4.0); 
+        baba.setAlpha(0); 
         if (this.anims.exists('baba_idle_anim')) baba.play('baba_idle_anim');
+        
+        // La facciamo apparire lentamente dalle tenebre (Fade-in e scorrimento in 4 secondi)
+        this.tweens.add({
+            targets: baba,
+            x: 1400,
+            alpha: 1,
+            duration: 4000 * mTempo,
+            ease: 'Power2'
+        });
     });
+    // ==========================================================================================
 
     // MINUTO 3:30 (210s) - ATTACCO DI GRUPPO E MORTE ESPLOSIVA
     this.time.delayedCall(210000 * mTempo, () => {
